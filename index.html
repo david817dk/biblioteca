@@ -306,6 +306,19 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
         Guía NFC
       </button>
     </div>
+    <div class="sb-divider"></div>
+    <div class="sb-section">
+      <span class="sb-label">Datos</span>
+      <button class="nav-btn" onclick="exportJSON()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Exportar JSON
+      </button>
+      <label class="nav-btn" style="cursor:pointer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Importar JSON
+        <input type="file" accept=".json" onchange="importJSON(event)" style="display:none">
+      </label>
+    </div>
     <div class="sb-stats">
       <div class="stat-row"><span class="k">Libros</span><span class="v" id="s-total">0</span></div>
       <div class="stat-row"><span class="k">Leídos</span><span class="v" id="s-leidos">0</span></div>
@@ -1080,6 +1093,32 @@ function filterByGenreFromStats(genre){
     } else {c.classList.remove('active');}
   });
   currentGenre=genre;renderBooks();
+}
+
+// ── EXPORT / IMPORT ──────────────────────────────────
+function exportJSON(){
+  const data=JSON.stringify(db,null,2);
+  const blob=new Blob([data],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='biblioteca.json';a.click();
+  URL.revokeObjectURL(url);
+  showToast('Exportado correctamente ✓');
+}
+function importJSON(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      const parsed=JSON.parse(ev.target.result);
+      if(!parsed.books)throw new Error('Formato inválido');
+      if(!confirm(`Importar ${parsed.books.length} libros? Se reemplazará la colección actual.`))return;
+      db=parsed;save();renderBooks();
+      showToast(`${parsed.books.length} libros importados ✓`);
+    }catch(err){alert('Archivo inválido o corrupto');}
+  };
+  reader.readAsText(file);
+  e.target.value='';
 }
 
 // ── UTILS ────────────────────────────────────────────
